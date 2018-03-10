@@ -35,21 +35,36 @@ private :
     int _moveSpeed; // keyword BOOTS is present if the most important item stat is moveSpeed
     int _manaRegen;
 
+
     float _ratioDamage;
     float _ratioHealth;
 
 public :
-    Item(string itemName, int itemCost, int damage, int health, int maxHealth, int mana, int maxMana, int moveSpeed, int manaRegen);
-    void trace(string type) const;
-    string getItemName();
-    int getItemCost();
-    int getDamage();
-    int getHealth();
-    int getMana();
-    int getManaRegen();
-    int getMoveSpeed();
-    int getRatioDamage();
-    int getRatioHealth();
+    Item(string itemName, int itemCost, int damage, int health, int maxHealth, int mana, int maxMana, int moveSpeed, int manaRegen) :
+            _itemName(itemName), _itemCost(itemCost), _damage(damage), _health(health), _maxHealth(maxHealth), _mana(mana), _maxMana(maxMana), _moveSpeed(moveSpeed), _manaRegen(manaRegen)
+    {
+        _ratioDamage = _damage ? (float) _itemCost / (float) _damage : 0;
+        _ratioHealth = _health ? (float) _itemCost / (float) _health : 0;
+    }
+
+    void trace(string type) const {
+        size_t found = _itemName.find(type);
+        if (found != string::npos) {
+            cerr << setw(20) << left << _itemName << " cout(" << setw(4) << _itemCost << ") dmg(" << _damage << ") hp(" << _health << "/" << _maxHealth << ") mana(" << _mana << "/" << _maxMana << ", +" << _manaRegen << ") move(" << _moveSpeed << ")";
+            cerr << " ratios(dmg=" << _ratioDamage << " hp=" << _ratioHealth << ")";
+            cerr << endl;
+        }
+    }
+
+    string getItemName() {return _itemName;};
+    int getItemCost() {return _itemCost;};
+    int getDamage() {return _damage;};
+    int getHealth() {return _health;};
+    int getMana() {return _mana;};
+    int getManaRegen() {return _manaRegen;};
+    int getMoveSpeed() {return _moveSpeed;};
+    int getRatioDamage() {return _ratioDamage;};
+    int getRatioHealth() {return _ratioHealth;};
 };
 
 /****************************** Sacoche ******************************/
@@ -59,9 +74,21 @@ private :
     vector <Item> _items;
 
 public :
-    int getNbPlaces();
-    void addItem(Item &item);
-    void removeItem(string nomItem);
+    int  getNbPlaces() {return max(0, _maxItems - _items.size());}
+
+    void addItem(Item &item) {
+        if (_items.size() == _maxItems) return;
+        _items.push_back(item);
+    }
+
+    void removeItem(string nomItem) {
+        for (int cpt = 0; cpt < _items.size(); cpt++) {
+            if (_items[cpt].getItemName() == nomItem) {
+                _items.erase(_items.begin() + cpt);
+                return;
+            }
+        }
+    }
 };
 
 /****************************** Point ******************************/
@@ -71,11 +98,17 @@ protected :
     int _y;
 
 public :
-    Point(int x, int y);
-    int getX();
-    int getY();
-    double dist(Point &p) const;
-    bool isInRange(Point &p, int range);
+    Point(int x, int y) : _x(x), _y(y) {}
+    int getX() {return _x;}
+    int getY() {return _y;}
+
+    double dist(Point &p) const {
+        return sqrt((_x - p._x) * (_x - p._x) + (_y - p._y) * (_y - p._y));
+    }
+
+    bool isInRange(Point &p, int range) {
+        return (dist(p) <= range);
+    }
 };
 
 /****************************** Circle ******************************/
@@ -84,13 +117,13 @@ protected :
     int _radius;
 
 public :
-    Circle(int x, int y, int radius);
+    Circle(int x, int y, int radius) : Point(x, y), _radius(radius) {}
 };
 
 /****************************** Bush ******************************/
 class Bush : public Circle {
 public :
-    Bush(int x, int y, int radius);
+    Bush(int x, int y, int radius) : Circle(x, y, radius) {}
 };
 
 /****************************** Unit ******************************/
@@ -112,19 +145,49 @@ protected :
     float _baseAttackTime;
 
 public :
-    Unit(int id, int x, int y, int attackRange, int health, int maxHealth, int shield, int attackDamage, int movementSpeed, int stunDuration, int goldValue);
-    int getId();
-    bool getAlive();
-    void setAlive(bool alive);
-    int getHealth();
-    int getMaxHealth();
-    int getDamage();
-    int getMovementSpeed();
-    void trace() const;
-    void maj(int id, int x, int y, int attackRange, int health, int maxHealth, int shield, int attackDamage, int movementSpeed, int stunDuration, int goldValue);
-    bool isInRange(Point &p);
-    float calculeAttackTime(Point cible);
-    float calculeAttackTime(Point p1, Point p2);
+    Unit(int id, int x, int y, int attackRange, int health, int maxHealth, int shield, int attackDamage, int movementSpeed, int stunDuration, int goldValue) :
+            _id(id), Point(x, y), _attackRange(attackRange), _health(health), _maxHealth(maxHealth), _shield(shield), _attackDamage(attackDamage), _movementSpeed(movementSpeed), _stunDuration(stunDuration), _goldValue(goldValue),
+            _alive(true), _baseAttackTime(0.2)
+    {}
+
+    int getId() {return _id;}
+    bool getAlive() {return _alive;}
+    void setAlive(bool alive) {_alive = alive;}
+    int getHealth() {return _health;}
+    int getMaxHealth() {return _maxHealth;}
+    int getDamage() { return _attackDamage;}
+    int getMovementSpeed() {return _movementSpeed;}
+
+    void trace() const {
+        cerr << "id(" << _id << ") (" << _x << ", " << _y << ") dmg(" << _attackDamage << ") range(" << _attackRange << ") hp(" << _health << "/" << _maxHealth << ") value(" << _goldValue << ")";
+        cerr << endl;
+    }
+    void maj(int id, int x, int y, int attackRange, int health, int maxHealth, int shield, int attackDamage, int movementSpeed, int stunDuration, int goldValue)
+    {
+        _id            = id;
+        _x             = x;
+        _y             = y;
+        _attackRange   = attackRange;
+        _health        = health;
+        _maxHealth     = maxHealth;
+        _shield        = shield;
+        _attackDamage  = attackDamage;
+        _movementSpeed = movementSpeed;
+        _stunDuration  = stunDuration;
+        _goldValue     = goldValue;
+
+        _alive = true;
+    }
+
+    bool isInRange(Point &p) {return Point::isInRange(p, _attackRange);}
+    float calculeAttackTime(Point cible) {
+        if (_attackRange < ATTACK_RANGE_MELEE) return _baseAttackTime;
+        return calculeAttackTime(Point(_x, _y), cible);
+    }
+    float calculeAttackTime(Point p1, Point p2) {
+        if (_attackRange < ATTACK_RANGE_MELEE) return _baseAttackTime;
+        return (_baseAttackTime * (1.0 + p1.dist(p2) / _attackRange));
+    }
 };
 
 /****************************** Hero ******************************/
@@ -177,11 +240,13 @@ private :
                       int countDown1, int countDown2, int countDown3, int mana, int maxMana, int manaRegeneration, string heroType, int isVisible, int itemsOwned);
 
 public :
-    Team(int num);
-    int getNum();
-    vector <Unit>& getTabTowers();
-    vector <Unit>& getTabUnits();
-    vector <Hero>& getTabHeros();
+    Team(int num) : _num(num) {}
+
+    int getNum() {return _num;}
+    vector <Unit>& getTabTowers() {return _tabTowers;}
+    vector <Unit>& getTabUnits() {return _tabUnits;}
+    vector <Hero>& getTabHeros() {return _tabHeros;}
+
     void trace() const;
     void clean();
     void addOrMajEntity(int unitId, string unitType, int x, int y, int attackRange, int health, int maxHealth, int shield, int attackDamage, int movementSpeed, int stunDuration, int goldValue,
@@ -192,8 +257,8 @@ public :
 class Monde {
 private :
     static Monde _m;
-    Monde();
-    ~Monde();
+    Monde() {}
+    ~Monde() {}
 
     vector <Bush> _tabBush;
     vector <Point> _tabSpawnPoints;
@@ -203,18 +268,22 @@ private :
     Team _team0 = Team(0);
     Team _team1 = Team(1);
 
+    int _myTeam;
+    int _otherTeam;
     int _gold;
     int _enemyGold;
     int _roundType;
 
 public :
-    static Monde& get();
-    int getRoundType();
-    int getGold();
-    vector <Item>& getTabPotions();
-    vector <Item>& getTabItems();
-    Team* getTeam0();
-    Team* getTeam1();
+    static Monde& get() {
+        return _m;
+    }
+    int getRoundType() {return _roundType;}
+    int getGold() {return _gold;}
+    vector <Item>& getTabPotions() {return _tabPotions;}
+    vector <Item>& getTabItems() {return _tabStuff;}
+    Team* getTeam0() {return &_team0;}
+    Team* getTeam1() {return &_team1;}
 
     void init();
     void maj();
@@ -253,121 +322,6 @@ public :
 /************************************************************/
 /************************************************************/
 
-
-/****************************** Item ******************************/
-Item::Item(string itemName, int itemCost, int damage, int health, int maxHealth, int mana, int maxMana, int moveSpeed, int manaRegen) :
-        _itemName(itemName), _itemCost(itemCost), _damage(damage), _health(health), _maxHealth(maxHealth), _mana(mana), _maxMana(maxMana), _moveSpeed(moveSpeed), _manaRegen(manaRegen)
-{
-    _ratioDamage = _damage ? (float) _itemCost / (float) _damage : 0;
-    _ratioHealth = _health ? (float) _itemCost / (float) _health : 0;
-}
-
-void Item::trace(string type) const {
-    size_t found = _itemName.find(type);
-    if (found != string::npos) {
-        cerr << setw(20) << left << _itemName << " cout(" << setw(4) << _itemCost << ") dmg(" << _damage << ") hp(" << _health << "/" << _maxHealth << ") mana(" << _mana << "/" << _maxMana << ", +" << _manaRegen << ") move(" << _moveSpeed << ")";
-        cerr << " ratios(dmg=" << _ratioDamage << " hp=" << _ratioHealth << ")";
-        cerr << endl;
-    }
-}
-
-string Item::getItemName() {return _itemName;};
-int Item::getItemCost() {return _itemCost;};
-int Item::getDamage() {return _damage;};
-int Item::getHealth() {return _health;};
-int Item::getMana() {return _mana;};
-int Item::getManaRegen() {return _manaRegen;};
-int Item::getMoveSpeed() {return _moveSpeed;};
-int Item::getRatioDamage() {return _ratioDamage;};
-int Item::getRatioHealth() {return _ratioHealth;};
-
-
-/****************************** Sacoche ******************************/
-int  Sacoche::getNbPlaces() {return max(0, _maxItems - _items.size());}
-
-void Sacoche::addItem(Item &item) {
-    if (_items.size() == _maxItems) return;
-    _items.push_back(item);
-}
-
-void Sacoche::removeItem(string nomItem) {
-    for (int cpt = 0; cpt < _items.size(); cpt++) {
-        if (_items[cpt].getItemName() == nomItem) {
-            _items.erase(_items.begin() + cpt);
-            return;
-        }
-    }
-}
-
-
-/****************************** Point ******************************/
-Point::Point(int x, int y) : _x(x), _y(y) {}
-int Point::getX() {return _x;}
-int Point::getY() {return _y;}
-
-double Point::dist(Point &p) const {
-    return sqrt((_x - p._x) * (_x - p._x) + (_y - p._y) * (_y - p._y));
-}
-
-bool Point::isInRange(Point &p, int range) {
-    return (dist(p) <= range);
-}
-
-/****************************** Circle ******************************/
-Circle::Circle(int x, int y, int radius) : Point(x, y), _radius(radius) {}
-
-/****************************** Bush ******************************/
-Bush::Bush(int x, int y, int radius) : Circle(x, y, radius) {}
-
-/****************************** Unit ******************************/
-Unit::Unit(int id, int x, int y, int attackRange, int health, int maxHealth, int shield, int attackDamage, int movementSpeed, int stunDuration, int goldValue) :
-        _id(id), Point(x, y), _attackRange(attackRange), _health(health), _maxHealth(maxHealth), _shield(shield), _attackDamage(attackDamage), _movementSpeed(movementSpeed), _stunDuration(stunDuration), _goldValue(goldValue),
-        _alive(true), _baseAttackTime(0.2)
-{}
-
-int Unit::getId() {return _id;}
-bool Unit::getAlive() {return _alive;}
-void Unit::setAlive(bool alive) {_alive = alive;}
-int Unit::getHealth() {return _health;}
-int Unit::getMaxHealth() {return _maxHealth;}
-int Unit::getDamage() { return _attackDamage;}
-int Unit::getMovementSpeed() {return _movementSpeed;}
-
-void Unit::trace() const {
-    cerr << "id(" << _id << ") (" << _x << ", " << _y << ") dmg(" << _attackDamage << ") range(" << _attackRange << ") hp(" << _health << "/" << _maxHealth << ") value(" << _goldValue << ")";
-    cerr << endl;
-}
-
-void Unit::maj(int id, int x, int y, int attackRange, int health, int maxHealth, int shield, int attackDamage, int movementSpeed, int stunDuration, int goldValue)
-{
-    _id            = id;
-    _x             = x;
-    _y             = y;
-    _attackRange   = attackRange;
-    _health        = health;
-    _maxHealth     = maxHealth;
-    _shield        = shield;
-    _attackDamage  = attackDamage;
-    _movementSpeed = movementSpeed;
-    _stunDuration  = stunDuration;
-    _goldValue     = goldValue;
-
-    _alive = true;
-}
-
-bool Unit::isInRange(Point &p) {
-    return Point::isInRange(p, _attackRange);
-}
-
-float Unit::calculeAttackTime(Point cible) {
-    if (_attackRange < ATTACK_RANGE_MELEE) return _baseAttackTime;
-    return calculeAttackTime(Point(_x, _y), cible);
-}
-
-float Unit::calculeAttackTime(Point p1, Point p2) {
-    if (_attackRange < ATTACK_RANGE_MELEE) return _baseAttackTime;
-    return (_baseAttackTime * (1.0 + p1.dist(p2) / _attackRange));
-}
 
 /****************************** Hero ******************************/
 Hero::Hero(int id, int x, int y, int attackRange, int health, int maxHealth, int shield, int attackDamage, int movementSpeed, int stunDuration, int goldValue,
@@ -447,13 +401,6 @@ void Team::addOrMajHero(int unitId, int x, int y, int attackRange, int health, i
     _tabHeros.push_back(Hero(unitId, x, y, attackRange, health, maxHealth, shield, attackDamage, movementSpeed, stunDuration, goldValue, countDown1, countDown2, countDown3, mana, maxMana, manaRegeneration, heroType, isVisible, itemsOwned));
 }
 
-Team::Team(int num) : _num(num) {}
-
-int Team::getNum() {return _num;}
-vector <Unit>& Team::getTabTowers() {return _tabTowers;}
-vector <Unit>& Team::getTabUnits() {return _tabUnits;}
-vector <Hero>& Team::getTabHeros() {return _tabHeros;}
-
 void Team::trace() const {
     cerr << "TEAM " << _num << " :" << endl;
     for (int cpt = 0; cpt < _tabTowers.size(); cpt++) {_tabTowers[cpt].trace();}
@@ -493,21 +440,11 @@ void Team::addOrMajEntity(int unitId, string unitType, int x, int y, int attackR
 }
 
 /****************************** Monde ******************************/
-Monde::Monde() {}
-Monde::~Monde() {}
-
-Monde& Monde::get() {
-    return _m;
-}
-
-int Monde::getRoundType() {return _roundType;}
-int Monde::getGold() {return _gold;}
-vector <Item>& Monde::getTabPotions() {return _tabPotions;}
-vector <Item>& Monde::getTabItems() {return _tabStuff;}
-Team* Monde::getTeam0() {return &_team0;}
-Team* Monde::getTeam1() {return &_team1;}
-
 void Monde::init() {
+    int myTeam;
+    cin >> _myTeam; cin.ignore();
+    _otherTeam = 1 - _myTeam;
+
     // On r�cup�re Bush et spawnPoints
     int bushAndSpawnPointCount; // usefrul from wood1, represents the number of bushes and the number of places where neutral units can spawn
     cin >> bushAndSpawnPointCount; cin.ignore();
@@ -523,7 +460,7 @@ void Monde::init() {
         } else if (entityType == "SPAWN") {
             _tabSpawnPoints.push_back(Point(x, y));
         } else {
-            cerr << "ERREUR init Monde" << endl;
+            cerr << "ERREUR init Monde, entityType=" << entityType << endl;
         }
     }
 
@@ -827,9 +764,7 @@ void Action::printResult() {
  **/
 int main()
 {
-    int myTeam;
-    cin >> myTeam; cin.ignore();
-    Action action = Action(myTeam);
+    Action action = Action(0);
 
     Monde::get().init();
 
