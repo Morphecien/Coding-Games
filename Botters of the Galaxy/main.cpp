@@ -226,6 +226,36 @@ public :
     void playSolo();
 };
 
+/****************************** Deadpool ******************************/
+class Deadpool : public Hero {
+public :
+    Deadpool(int id, int x, int y);
+};
+
+/****************************** Hulk ******************************/
+class Hulk : public Hero {
+public :
+    Hulk(int id, int x, int y);
+};
+
+/****************************** Valkyrie ******************************/
+class Valkyrie : public Hero {
+public :
+    Valkyrie(int id, int x, int y);
+};
+
+/****************************** Ironman ******************************/
+class Ironman : public Hero {
+public :
+    Ironman(int id, int x, int y);
+};
+
+/****************************** Doctor Strange ******************************/
+class DoctorStrange : public Hero {
+public :
+    DoctorStrange(int id, int x, int y);
+};
+
 /****************************** Team ******************************/
 class Team {
 private :
@@ -333,6 +363,26 @@ Hero::Hero(int id, int x, int y, int attackRange, int health, int maxHealth, int
     _baseAttackTime = 0.1;
 }
 
+Deadpool::Deadpool(int id, int x, int y) :
+        Hero(id, x, y, 110, 1380, 1380, 0, 80, 200, 0, 300, 0, 0, 0, 100, 100, 1, "DEADPOOL", 1, 0)
+{}
+
+Hulk::Hulk(int id, int x, int y) :
+        Hero(id, x, y, 95, 1450, 1450, 0, 80, 200, 0, 300, 0, 0, 0, 90, 90, 1, "HULK", 1, 0)
+{}
+
+Valkyrie::Valkyrie(int id, int x, int y) :
+        Hero(id, x, y, 130, 1400, 1400, 0, 65, 200, 0, 300, 0, 0, 0, 155, 155, 2, "VALKYRIE", 1, 0)
+{}
+
+Ironman::Ironman(int id, int x, int y) :
+        Hero(id, x, y, 270, 820, 820, 0, 60, 200, 0, 300, 0, 0, 0, 200, 200, 2, "IRONMAN", 1, 0)
+{}
+
+DoctorStrange::DoctorStrange(int id, int x, int y) :
+        Hero(id, x, y, 245, 955, 955, 0, 50, 200, 0, 300, 0, 0, 0, 300, 300, 2, "DOCTOR_STRANGE", 1, 0)
+{}
+
 Sacoche& Hero::getSacoche() {return _sacoche;}
 string Hero::getOrder() {return _order;}
 void Hero::setOrder(string order) {_order = order;}
@@ -397,8 +447,22 @@ void Team::addOrMajHero(int unitId, int x, int y, int attackRange, int health, i
             return;
         }
     }
-    // Si on est l�, c'est qu'on n'a pas trouv� l'unit�
-    _tabHeros.push_back(Hero(unitId, x, y, attackRange, health, maxHealth, shield, attackDamage, movementSpeed, stunDuration, goldValue, countDown1, countDown2, countDown3, mana, maxMana, manaRegeneration, heroType, isVisible, itemsOwned));
+    // Si on est là, c'est qu'on n'a pas trouvé l'unité
+    if (heroType == "DEADPOOL") {
+        _tabHeros.push_back(Deadpool(unitId, x, y));
+    }
+    else if (heroType == "HULK") {
+        _tabHeros.push_back(Hulk(unitId, x, y));
+    }
+    else if (heroType == "VALKYRIE") {
+        _tabHeros.push_back(Valkyrie(unitId, x, y));
+    }
+    else if (heroType == "IRONMAN") {
+        _tabHeros.push_back(Ironman(unitId, x, y));
+    }
+    else if (heroType == "DOCTOR_STRANGE") {
+        _tabHeros.push_back(DoctorStrange(unitId, x, y));
+    }
 }
 
 void Team::trace() const {
